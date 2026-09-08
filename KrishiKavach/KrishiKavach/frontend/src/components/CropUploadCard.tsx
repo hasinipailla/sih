@@ -9,7 +9,31 @@ interface CropUploadCardProps {
   onRetake: () => void
   language: VoiceLanguage
   error?: string | null
+  selectedCrop: string
+  onCropChange: (crop: string) => void
+  selectedDistrict: string
+  onDistrictChange: (district: string) => void
 }
+
+const SUPPORTED_CROPS = [
+  { id: "Tomato", labelEn: "Tomato (टोमॅटो / टमाटर)", icon: "🍅" },
+  { id: "Cotton", labelEn: "Cotton (कापूस / कपास)", icon: "🌱" },
+  { id: "Onion", labelEn: "Onion (कांदा / प्याज)", icon: "🧅" },
+  { id: "Grapes", labelEn: "Grapes (द्राक्षे / अंगूर)", icon: "🍇" },
+  { id: "Sugarcane", labelEn: "Sugarcane (ऊस / गन्ना)", icon: "🎋" },
+  { id: "Potato", labelEn: "Potato (बटाटा / आलू)", icon: "🥔" },
+  { id: "Soybean", labelEn: "Soybean (सोयाबीन)", icon: "🌿" },
+  { id: "Rice", labelEn: "Rice (भात / धान)", icon: "🌾" },
+  { id: "General", labelEn: "General / Other Plant", icon: "🍃" },
+]
+
+const MAHARASHTRA_DISTRICTS = [
+  "Pune", "Nashik", "Aurangabad", "Nagpur", "Satara", "Kolhapur",
+  "Solapur", "Ahmednagar", "Jalgaon", "Amravati", "Latur", "Buldhana",
+  "Sangli", "Yavatmal", "Raigad", "Thane", "Akola", "Beed", "Chandrapur",
+  "Dhule", "Gadchiroli", "Gondia", "Hingoli", "Jalna", "Nanded", "Nandurbar",
+  "Osmanabad", "Parbhani", "Ratnagiri", "Sindhudurg", "Wardha", "Washim",
+]
 
 export function CropUploadCard({
   previewUrl,
@@ -19,17 +43,83 @@ export function CropUploadCard({
   onRetake,
   language,
   error,
+  selectedCrop,
+  onCropChange,
+  selectedDistrict,
+  onDistrictChange,
 }: CropUploadCardProps) {
   return (
     <div className="card">
       <h2 className="card-title">🌱 {t("action_take_photo", language)}</h2>
       <p style={{ color: "var(--color-text-subtle)", fontSize: "0.9rem", marginBottom: 16 }}>
         {language === "hi-IN"
-          ? "प्रभावित पत्ते की साफ़ फोटो खींचें। सूरज पौधे के सामने हो, पीछे नहीं।"
+          ? "अपनी फसल और ज़िला चुनें, फिर प्रभावित पत्ते की साफ़ फोटो खींचकर विश्लेषण करें।"
           : language === "mr-IN"
-          ? "बाधित पानाचा स्पष्ट फोटो घ्या. प्रकाश पानावर असावा."
-          : "Take a clear photo of the affected leaf or plant. Ensure good lighting and hold steady."}
+          ? "तुमचे पीक आणि जिल्हा निवडा, नंतर बाधित पानाचा स्पष्ट फोटो काढून विश्लेषण करा."
+          : "Select your target crop and district, then capture or upload a clear photo of the leaf."}
       </p>
+
+      {/* Crop and District Selectors */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: 12,
+        marginBottom: 18,
+        background: "var(--color-bg-app)",
+        padding: 14,
+        borderRadius: "var(--radius-md)",
+        border: "1px solid var(--color-border)",
+      }}>
+        <div>
+          <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "block", marginBottom: 6, color: "var(--color-forest)" }}>
+            🌾 {language === "hi-IN" ? "फसल चुनें" : language === "mr-IN" ? "पीक निवडा" : "Target Crop"}:
+          </label>
+          <select
+            value={selectedCrop}
+            onChange={(e) => onCropChange(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "1px solid var(--color-border)",
+              background: "var(--color-card-bg)",
+              fontSize: "0.88rem",
+              fontWeight: 600,
+            }}
+          >
+            {SUPPORTED_CROPS.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.icon} {c.labelEn}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label style={{ fontSize: "0.82rem", fontWeight: 700, display: "block", marginBottom: 6, color: "var(--color-forest)" }}>
+            📍 {language === "hi-IN" ? "ज़िला चुनें" : language === "mr-IN" ? "जिल्हा निवडा" : "District (Maharashtra)"}:
+          </label>
+          <select
+            value={selectedDistrict}
+            onChange={(e) => onDistrictChange(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px 10px",
+              borderRadius: 8,
+              border: "1px solid var(--color-border)",
+              background: "var(--color-card-bg)",
+              fontSize: "0.88rem",
+              fontWeight: 600,
+            }}
+          >
+            {MAHARASHTRA_DISTRICTS.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       {error && <div className="error">{error}</div>}
 
@@ -45,7 +135,7 @@ export function CropUploadCard({
               onClick={onSendForAnalysis}
               style={{ flex: 1, minWidth: 160, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
             >
-              🔍 {t("action_send_for_analysis", language)}
+              🔍 {t("action_send_for_analysis", language)} ({selectedCrop})
             </button>
             <button
               className="small-btn"
@@ -60,7 +150,7 @@ export function CropUploadCard({
         <div>
           <div className="camera-frame-container" style={{ marginBottom: 20 }}>
             <div className="camera-guide-overlay">
-              <div className="guide-text">☀️ Ensure daylight on the leaf</div>
+              <div className="guide-text">☀️ Ensure good daylight on the leaf</div>
               <div style={{ textAlign: "center", color: "#22C55E", fontSize: "2rem", fontWeight: 800 }}>
                 [ Position Leaf Here ]
               </div>
@@ -69,7 +159,7 @@ export function CropUploadCard({
 
             <div style={{ color: "#64748B", textAlign: "center" }}>
               <span style={{ fontSize: "3rem", display: "block" }}>🌿</span>
-              <span style={{ fontSize: "0.9rem" }}>No photo selected yet</span>
+              <span style={{ fontSize: "0.9rem" }}>Ready to capture {selectedCrop} leaf</span>
             </div>
           </div>
 

@@ -33,6 +33,12 @@ export interface PredictionResult {
   is_demo: boolean
   model_source: string
   alternatives: Array<{ disease: string; crop: string; confidence: number }>
+  visual_evidence?: string[]
+  environmental_context?: {
+    district?: string
+    soil_moisture_percent?: number | null
+    evapotranspiration_mm?: number | null
+  }
 }
 
 export interface CaseCreateResponse {

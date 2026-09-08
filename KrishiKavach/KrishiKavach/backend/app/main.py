@@ -203,14 +203,40 @@ async def predict_and_create_case(
         f.write(content)
 
     # Build context for prediction
+    effective_district = (district or farmer.district or "Pune").strip()
+    effective_crop = (crop_type or farm.primary_crop or "Tomato").strip()
+
+    # Query latest WeatherContext from database for the district
+    stmt_weather = (
+        select(WeatherContext)
+        .where(WeatherContext.district.ilike(effective_district))
+        .order_by(WeatherContext.recorded_at.desc())
+        .limit(1)
+    )
+    res_weather = await session.execute(stmt_weather)
+    weather = res_weather.scalar_one_or_none()
+
+    soil_moisture = weather.soil_moisture_percent if weather else None
+    evapo = weather.evapotranspiration_mm if weather else None
+
+    # Query active outbreaks for this district
+    stmt_outbreaks = select(DiseaseReport.disease_type).where(
+        DiseaseReport.district.ilike(effective_district)
+    )
+    res_outbreaks = await session.execute(stmt_outbreaks)
+    active_outbreaks = [row[0] for row in res_outbreaks.all() if row[0]]
+
     context = {
-        "district": district or farmer.district,
-        "crop_type": crop_type or farm.primary_crop,
+        "district": effective_district,
+        "crop_type": effective_crop,
         "crop_stage": crop_stage,
         "farmer_language": farmer_language,
+        "soil_moisture_percent": soil_moisture,
+        "evapotranspiration_mm": evapo,
+        "active_outbreaks": active_outbreaks,
     }
 
-    # Run prediction
+    # Run prediction with real vision + agronomic intelligence
     prediction, recommendation = await predict_and_recommend(
         image_bytes=content,
         context=context,
@@ -226,7 +252,7 @@ async def predict_and_create_case(
         recommendation=recommendation,
         image_path=str(file_path),
         image_thumbnail_path=None,
-        district=district,
+        district=effective_district,
     )
 
     await session.commit()
@@ -251,6 +277,58 @@ async def predict_and_create_case(
         case_status=case.case_status,
         is_demo_prediction=prediction.is_demo,
     )
+
+
+# ---------------------------------------------------------------------------
+# Weather / Environmental Context endpoints
+# ---------------------------------------------------------------------------
+
+@app.get("/api/weather/{district}", tags=["weather"])
+async def get_district_weather(
+    district: str,
+    session: AsyncSession = Depends(get_async_session),
+) -> dict:
+    """Return latest soil moisture and evapotranspiration data for a district."""
+    stmt = (
+        select(WeatherContext)
+        .where(WeatherContext.district.ilike(district.strip()))
+        .order_by(WeatherContext.recorded_at.desc())
+        .limit(1)
+    )
+    result = await session.execute(stmt)
+    weather = result.scalar_one_or_none()
+    if not weather:
+        raise HTTPException(status_code=404, detail=f"No weather data found for district: {district}")
+    return {
+        "district": weather.district,
+        "state": weather.state,
+        "soil_moisture_percent": weather.soil_moisture_percent,
+        "evapotranspiration_mm": weather.evapotranspiration_mm,
+        "temperature_c": weather.temperature_c,
+        "humidity_percent": weather.humidity_percent,
+        "recorded_at": weather.recorded_at.isoformat(),
+        "source": weather.source,
+    }
+
+
+@app.get("/api/weather", tags=["weather"])
+async def list_all_weather(
+    session: AsyncSession = Depends(get_async_session),
+) -> list[dict]:
+    """Return all district environmental records."""
+    stmt = select(WeatherContext).order_by(WeatherContext.district)
+    result = await session.execute(stmt)
+    records = list(result.scalars().all())
+    return [
+        {
+            "district": w.district,
+            "soil_moisture_percent": w.soil_moisture_percent,
+            "evapotranspiration_mm": w.evapotranspiration_mm,
+            "temperature_c": w.temperature_c,
+            "humidity_percent": w.humidity_percent,
+        }
+        for w in records
+    ]
 
 
 # ---------------------------------------------------------------------------

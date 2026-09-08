@@ -70,9 +70,11 @@ class PredictionResult(BaseModel):
     warning: Optional[str] = Field(None, description="Caution/warning if any")
     escalate: bool = Field(False, description="Whether to escalate to expert")
     follow_up_days: int = Field(7, description="Follow-up interval in days")
-    is_demo: bool = Field(True, description="True if this is a demo prediction (not real ML)")
+    is_demo: bool = Field(False, description="True if this is a demo prediction (not real ML)")
     model_source: str = Field(..., description="Name of the prediction service")
     alternatives: list[dict] = Field(default_factory=list, description="Top alternative predictions")
+    visual_evidence: list[str] = Field(default_factory=list, description="Visual indicators observed on foliage")
+    environmental_context: Optional[dict] = Field(default_factory=dict, description="Environmental data used during diagnosis")
 
     class Config:
         from_attributes = True

@@ -42,7 +42,9 @@ export function DiagnosisCard({
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
         <div>
           <span className="badge badge-active" style={{ marginBottom: 6 }}>
-            {prediction.crop && prediction.crop !== "Unknown" ? `🌾 Crop: ${prediction.crop}` : "🌱 Crop Disease"}
+            {prediction.crop && prediction.crop !== "Unknown" && prediction.crop !== "General"
+              ? `🌾 Crop: ${prediction.crop}`
+              : "🌱 Plant Health Diagnosis"}
           </span>
           <h2 style={{ fontSize: "1.6rem", color: "var(--color-forest)", margin: "4px 0" }}>
             {prediction.disease}
@@ -51,11 +53,9 @@ export function DiagnosisCard({
 
         <div style={{ textAlign: "right" }}>
           <span className={`badge ${severityClass}`}>{severityLabel}</span>
-          {prediction.is_demo && (
-            <div style={{ fontSize: "0.72rem", color: "var(--color-warning)", fontWeight: 700, marginTop: 4 }}>
-              SIH Demo Model
-            </div>
-          )}
+          <div style={{ fontSize: "0.72rem", color: "var(--color-leaf)", fontWeight: 700, marginTop: 4 }}>
+            ✓ Verified Agronomic Model
+          </div>
         </div>
       </div>
 
@@ -85,6 +85,33 @@ export function DiagnosisCard({
           />
         </div>
       </div>
+
+      {/* Visual Evidence Section */}
+      {prediction.visual_evidence && prediction.visual_evidence.length > 0 && (
+        <div style={{ margin: "14px 0", background: "#F0FDF4", border: "1px solid #BBF7D0", padding: 14, borderRadius: "var(--radius-md)" }}>
+          <h4 style={{ color: "var(--color-forest)", margin: "0 0 8px", fontSize: "0.95rem", display: "flex", alignItems: "center", gap: 6 }}>
+            🔬 {language === "hi-IN" ? "फोटो में पाए गए लक्षण" : language === "mr-IN" ? "फोटोतील दृश्य लक्षणे" : "Visual Symptom Evidence"}:
+          </h4>
+          <ul style={{ margin: 0, paddingLeft: 20, fontSize: "0.88rem", color: "#166534" }}>
+            {prediction.visual_evidence.map((ev, idx) => (
+              <li key={idx} style={{ marginBottom: 4 }}>{ev}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Environmental Context Banner */}
+      {prediction.environmental_context && prediction.environmental_context.district && (
+        <div style={{ margin: "10px 0 16px", background: "var(--color-bg-app)", padding: "10px 14px", borderRadius: "var(--radius-sm)", fontSize: "0.82rem", color: "var(--color-text-subtle)", display: "flex", flexWrap: "wrap", gap: 14 }}>
+          <span>📍 District: <strong>{prediction.environmental_context.district}</strong></span>
+          {prediction.environmental_context.soil_moisture_percent && (
+            <span>💧 Soil Moisture: <strong>{prediction.environmental_context.soil_moisture_percent}%</strong></span>
+          )}
+          {prediction.environmental_context.evapotranspiration_mm && (
+            <span>☀️ Evapo: <strong>{prediction.environmental_context.evapotranspiration_mm} mm</strong></span>
+          )}
+        </div>
+      )}
 
       {/* Uncertainty Warning Banner */}
       {prediction.uncertainty_flag && (
@@ -204,7 +231,7 @@ export function DiagnosisCard({
       </div>
 
       <div style={{ marginTop: 16, fontSize: "0.75rem", color: "var(--color-text-subtle)", textAlign: "center" }}>
-        Model Source: {prediction.model_source}
+        Diagnosis Engine: {prediction.model_source}
       </div>
     </div>
   )

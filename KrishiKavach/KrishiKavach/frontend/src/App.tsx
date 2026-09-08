@@ -39,6 +39,8 @@ export default function App() {
   const [currentDemoDate, setCurrentDemoDate] = useState<string | null>(null)
   const [activeDiagnosis, setActiveDiagnosis] = useState<CaseCreateResponse | null>(null)
   const [isPredicting, setIsPredicting] = useState(false)
+  const [selectedCrop, setSelectedCrop] = useState<string>("Tomato")
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("Pune")
 
   const speak = useCallback(
     async (text: string) => {
@@ -98,7 +100,13 @@ export default function App() {
     await speak(loadingMsg)
 
     try {
-      const result = await predictImage(photo.pendingFile, undefined, undefined, undefined, language)
+      const result = await predictImage(
+        photo.pendingFile,
+        selectedDistrict,
+        selectedCrop,
+        undefined,
+        language
+      )
       setActiveDiagnosis(result)
       setIsPredicting(false)
 
@@ -137,22 +145,31 @@ export default function App() {
       await speak(msg)
       return
     }
-    setBannerMessage((language === "hi-IN" ? "आपने कहा: " : "You said: ") + reply)
+    setBannerMessage((language === "hi-IN" ? "आपने कहा: " : language === "mr-IN" ? "तुम्ही म्हणालात: " : "You said: ") + reply)
     const text = reply.toLowerCase()
     let response =
       language === "hi-IN"
         ? "मैंने आपकी बात सुनी। किसी भी पौधे रोग के लिए सबसे सुरक्षित पहला कदम है प्रभावित पत्ते हटा दें और एक साफ़ फोटो लेकर मुझे भेजें।"
+        : language === "mr-IN"
+        ? "मी तुमचे म्हणणे ऐकले. कोणत्याही रोगासाठी सर्वात सुरक्षित पहिली पायरी म्हणजे बाधित पाने काढून टाका आणि मला एक स्पष्ट फोटो पाठवा."
         : "I heard you. For any plant disease, the safest first step is to remove affected leaves and send me a clear photo."
 
-    if (text.includes("yellow") || text.includes("पीला")) {
+    if (text.includes("yellow") || text.includes("पीला") || text.includes("पिवळा") || text.includes("पिवळे")) {
       response =
         language === "hi-IN"
           ? "पीले पत्ते अक्सर पोषण की कमी या अधिक पानी का संकेत हैं। मिट्टी की नमी जाँचें और कुछ दिन पानी कम दें।"
-          : "Yellow leaves often mean a nutrient problem or over-watering. Check the soil moisture and reduce watering for a few days."
-    } else if (text.includes("spot") || text.includes("brown") || text.includes("धब्बा") || text.includes("भूरा")) {
+          : language === "mr-IN"
+          ? "पिवळी पाने सहसा पोषणद्रव्यांची कमतरता किंवा जास्त पाण्याचे लक्षण असतात. मातीची आर्द्रता तपासा आणि काही दिवस पाणी कमी द्या."
+          : "Yellow leaves often mean a nutrient deficiency or over-watering. Check the soil moisture and reduce watering for a few days."
+    } else if (
+      text.includes("spot") || text.includes("brown") || text.includes("धब्बा") || text.includes("भूरा") ||
+      text.includes("डाग") || text.includes("तपकिरी") || text.includes("काळे")
+    ) {
       response =
         language === "hi-IN"
           ? "धब्बे या भूरे हिस्से आमतौर पर फफूंद रोग होते हैं। प्रभावित पत्ते हटा दें और एक फोटो लेकर मुझे भेजें।"
+          : language === "mr-IN"
+          ? "पानांवरील डाग किंवा तपकिरी भाग सामान्यतः बुरशीजन्य रोग असतात. बाधित पाने नष्ट करा आणि मला एक फोटो पाठवा."
           : "Spots or brown patches usually mean a fungal disease. Remove affected leaves and send me a photo."
     }
     setBannerMessage(response)
@@ -206,6 +223,8 @@ export default function App() {
             language={language}
             activeCasesCount={activeCasesCount}
             dueFollowUpsCount={dueFollowUpsCount}
+            district={selectedDistrict}
+            primaryCrop={selectedCrop}
           />
 
           <div className="quick-grid">
@@ -278,6 +297,10 @@ export default function App() {
               onRetake={photo.reset}
               language={language}
               error={predictError}
+              selectedCrop={selectedCrop}
+              onCropChange={setSelectedCrop}
+              selectedDistrict={selectedDistrict}
+              onDistrictChange={setSelectedDistrict}
             />
           )}
         </>

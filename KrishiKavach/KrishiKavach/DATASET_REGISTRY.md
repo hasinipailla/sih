@@ -41,8 +41,9 @@
 
 ### 5. Tabular Data (Environmental)
 - **Location**: `/data/`
-  - `soil_moisture.csv`: District-level soil moisture for Maharashtra (697k rows)
-  - `evapotranspiration.csv`: District-level evapotranspiration for Maharashtra (502k rows)
+  - `soil_moisture.csv`: District-level soil moisture for Maharashtra (8,680 verified rows across 35 districts, covering daily measurements from Jan 2020 to Oct 2020; primary metric: Volume Soilmoisture percg at 15cm depth)
+  - `evapotranspiration.csv`: District-level evapotranspiration for Maharashtra (8,750 verified rows across 35 districts, covering daily measurements from Jan 2020 to Oct 2020; primary metric: Evapo Level in mm)
+- **Standardization & Aliasing**: Raw CSV district names are in uppercase and require canonical normalization (e.g. `AHMADNAGAR` → Ahmednagar, `BID` → Beed, `GARHCHIROLI` → Gadchiroli, `GONDIYA` → Gondia, `RAIGARH` → Raigad, `MUMBAI` → Mumbai City, `BULDANA` → Buldhana).
 
 ## ML Model Implications
 
